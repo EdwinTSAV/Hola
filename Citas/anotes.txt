@@ -1,0 +1,203 @@
+Conexion Con BBDD
+Esto es mas ordenado que colocarlo directamente
+
+- Direccion de la BBDD localHost
+$db_host = "localhost";
+- Nombre de la BBDD -> como se llama tu BBDD
+$db_nombre = "apiprueb_chef";
+- Usuario de la BBDD -> root
+$db_usuario = "root";
+- Contraseña de la BBDD -> mundo
+$db_contra = "mundo";
+
+Conexion por procedimientos
+$conexion = new mysqli($db_host,$db_usuario,$db_contra,$db_nombre);
+new mysqli es propia funcion de mysqli
+
+consultar para ver si se conecto:
+$consulta = "SELECT * FROM orders";
+
+para ejecutar la consulta se debe hacer asi
+mysqli_query pide cual es la conexion y cual es la instruccion
+$resultados = mysqli_query($conexion,$consulta);
+
+Esto genera una tabla virtual en la memoria donde se carga la informacion
+de la sentencia sql
+
+mostrar la consulta:
+mysqli_fetch_row mira lo que esta en la tabla virtual que se creo y lo
+transforma en un array
+$fila = mysqli_fetch_row($resultados); //vota un array indexivo
+y se imprime despues de transformarlo
+echo $fila[0] . "<br>";
+echo $fila[1] . "<br>";
+echo $fila[2] . "<br>";
+
+Manejar errores
+Si esta mal el dominio
+despues de la linea de conexion debe colocarse :
+esta funcion se ejecuta siempre y cuando no haya exito con la conexion
+if(mysqli_connect_errno()){
+    echo "Fallo al conectar con la BBDD";
+    exit(); //se le dice que deje de ejecutar la siguiente linea de codigo
+}
+
+Si esta mal el nombre de la BBDD
+le decimos que si esta bien la conexion que la seleccione
+y si no, que nos mande el error de no se encuentra
+mysqli_select_db($conexion,$db_nombre) or die("No se encuentra la BBDD");
+
+respetar acentos latinos
+se le indica que despues de usar la conexion use los
+caracteres utf8
+mysqli_set_charset($conexion,"utf8");
+
+mostrar todos los datos de una tabla, y no dato por dato:
+mientras haya datos en $fila = mysqli_ . . . imprime
+while($fila = mysqli_fetch_row($resultados)){
+    //$fila = mysqli_fetch_row($resultados);
+    echo $fila[0] . "<br>";
+    echo $fila[1] . "<br>";
+    echo $fila[2] . "<br>";
+}
+
+Cerrar la conexion:
+porque consume recursos
+cuando ya no se necesita nada mas
+se debe definir que conexion se esta cerrando
+ya que se puede conectar muchas BBDD 
+mysqli_close($conexion);
+
+
+Compartir datos de conexion a otros archivo
+para no repetir los datos
+
+//esto votaria un array asociativo
+while($fila = mysqli_fetch_array($resultados, MYSQLI_ASSOC)){
+    foreach($fila as $clave=>$valor){
+		echo "$valor - ";
+       }
+       echo "<br>";
+
+}
+
+Busqueda por sql
+% -> sustituye una cadena de caracteres
+_ -> sustituye a un unico caracter
+
+Crear controladores en laravel:
+php artisan make:controller nombreController
+//lo crea en /app/Http/Controllers/ . .
+
+
+Cuando se usa laravel, se cambia en NAMEPROJECT/config/database.php
+linea 18 cambiar 'default' => env('DB_CONNECTION', 'mysql'), por ->    'default' => 'mysql',
+como se elige mysql, se debe remplazar en 
+'mysql' => [
+no se hace, porque es de muy poca seguridad, y pueden
+robarnos informacion, laravel configura el proyecto para que cuando se suba a un repositorio, ignora el .env
+//pero nada de esto se hace, ya que esta configurado para que se edite desde el .env
+asi que debemos editar  en .env
+
+//en la carpteta /NAMEPROJECT/database/migrations/ . . .
+se crean las migraciones (crean las tablas para que se creen en la BD)
+como se realiza una migracion
+terminal:
+php artisan migrate
+
+recorrera uno a una las migraciones que se hayan creado
+(ejecuta el metodo up), debe crearse correctamente el.env
+si se ejecuta las migraciones nuevamente, dira que no existen migraciones
+porque en la BD se coloco una tabla adicional donde hay registro de las migraciones que se hicieron
+
+//crear propias migraciones
+se ejecuta en la terminal:
+php artisan make:migration cursos
+
+//crear propias migraciones forma 3 y con llenado de:
+se ejecuta en la terminal:
+php artisan make:migration create_amigo_table
+//larabel no ayuda con algunos campos
+
+//si solo quiero añadir una columna a una tabla, porque me falto un campo
+php artisan migrate:fresh
+lo que hace es eliminar todas las tablas, y recrearlas
+//no debe usarse migrate:fresh, porque e sun metodo destructivo, eliminara los datos de las tablas
+php artisan migrate:refresh
+elimina masivamente tambien, pero la diferencia es que
+migrate:refresh lee los metodos down, y si esta mal creado por error de sintaxis, no se elimina
+migrate:fresh elimina todos los datos, sin importar el metodo down
+
+Si queremos añadir campos a una tabla sin eliminar nada entonces
+php artisan make:migration add_avatar_to_users_table
+añadir campo avatar a la tabla usuarios 
+esto crea una nuevo doc de migracion en donde debe como deben ser los campos
+en el nuevo campo:
+en el up -> $table->string('avatar')->nullable(); se debe especificar que puede tener valor nulo
+porque si hay otros datos en la BD ocasionara un error
+en el down -> $table->dropColumn('avatar');
+se debe colocar que se elimina la columna avatar
+
+y si hice mal el anterior, hp artisan make:migration add_avatar_to_users_table
+puedo ahcer un php artisan migrate:rollback y eliminara solo esa columna de la tabla
+entonces corrijo que lugar quiero que tome 
+$table->string('avatar')->nullable()->after('id');
+le digo que lo quiero despues del campo id
+
+y si quiero modificar los atributos a una columna y no añadirla:
+ 1 composer require doctrine/dbal
+ 1 agregar la dependencia
+ 2 php artisan make:migration cambiar_propiedades_to_users_table
+ 2 crear una migracion
+ 3 $table->string('name',50)->nullable()->change();
+ 3 en el up se le dice que modificacion quiero al campo
+ 4 $table->string('name',255)->nullable(false)->change();
+ 4 en el down se le dice que regrese al campo que estuvo anteriormente
+
+//como eliminar la migracion de up a down
+//se hace por lotes, es decir de la ultima migracion que se hizo hacia atras
+php artisan migrate:rollback
+si esta mal el metodo dow o refresh, no lo borrara
+php artisan migrate:reset
+Elimina todas las tablas, no necesita hacer varias vecesl el rollback
+
+ORM
+es para trabajar con los modelos, mapeador relacional de objetos (ORM) que hace que sea
+agradable interactuar con su base de datos
+
+1   crear modelo
+se le dabe dar una convension: administrar tabla
+si creo modelo Cita entonces manejara tabla citas 
+en pocas palabras Mayuscula en singular a minusculas y plural
+el singular le saca del ingles no del español
+1    php artisan make:model Evento
+Crea el Model que manejara la tabla eventos
+2   Usar modelos con tecnologia llamada Tinker
+Tinker, permite interactuar con laravel, incluido orm
+desde la terminal
+no hemos dicho que deba conectar con la tabla de la BD, pero la reconoce
+por lo de arriba, Evento maneja a eventos
+2   php artisan tinker
+entra a otra terminal, para salir se coloca exit
+3   use App\Models\Evento; se debe colocar ; si o si XD
+4   $evento = new Evento; se define una variable con nombre evento, y que sea instancia de la clase curso
+5   asignar propiedades
+    $evento->evento = 'primera hora';
+    $evento->color = 'RED';
+    $evento->f_inicio = '2021-07-07';
+    $evento->f_fin = '2021-07-08';
+    $evento; veo todo del evento que cree
+    $evento->save(); me guarda en la BD
+6   si quiero cambiar propiedades de la tabla:
+    $evento->evento = 'Cumpleaños';
+    Como encuentra un id lo actualizara, si no encuentra id lo crea
+
+7   //Si quiero que administre a una tabla en especifico entonces:
+    //y no a la de su nombre entonces se añade
+    protected $table = "eventoscalendar";
+
+
+
+ahora a crear estructura
+
+

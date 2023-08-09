@@ -1,0 +1,162 @@
+Importar varios datos desde laravel a la DDBB
+si es manualmente, pero desde laravel:
+/app/database/seeders/DatabaseSeeder.php
+dentro de la funcion run:
+        $evento = new Evento();
+        $evento->id=2;
+        $evento->evento = "Dia";
+        $evento->color = "orange";
+        $evento->f_inicio = "2023-08-10";
+        $evento->f_fin = "2023-08-11";
+        $evento->save();
+a continuacion ejecutar:
+php artisan db:seed 
+//corregir la migracion porque se tiene que colocar el ID
+un problema es si queremos colocar muchos archivos:
+entonces se crea un nuevo seeder 
+php artisan make:seeder EventoSeeder
+y todo lo que coloquemos en el DatabaseSeeder.php principal
+pasaremos a colocarlo en el nuevo 
+sin embargo cuando corremos
+php artisan db:seed 
+no guarda nada a la BD por que solo leera DatabaseSeeder.php
+se debe: configurar para que entienda lo de la otra clase
+$this->call(EventoSeeder::class);
+debemos colocar esa linea de arriba en el DatabaseSeeder.php en el run
+php artisan db:seed 
+volvemos a correr y verificamos que se creo los datos
+//si queremos migrar de un nuevo proyecto y traernos todo:
+php artisan migrate --seed
+
+Factori generan datos de prueba  en la BBDD
+factori llena nuestra BD con datos de prueba solo debemos indicarle con que tipo de
+informacion queremos que se llene e indicarle la cantidad de registros:
+php artisan make:factory EventoFactory
+en el doc creado 
+/app/database/factories/EventoFactory.php
+indicarle que modelo se usara 
+use App\Models\Evento;
+y en el protected $model = Evento::clas;
+y para un nombre identificativo en:
+class EventoFactory extends Factory 
+Si no quieres modificar el archivo manualmente, debes de crearlo asi:
+php artisan make:factory EventoFactory --model=Evento
+se le indica en --model=Evento que la clase que lo controlara sera Evento 
+Ahora si esta tal cual habriamos modificado manualmente.
+Como llenar la tabla, en la parte de return, funcion definition:
+indicarle que campos tiene la tabla
+retunr[
+    'evento'=>$this->faker->sentence(), //son propiedades de Factory, porque extiende de ella
+                                        //le decimos sentences porque queremos que sea una oracion
+    'color'=>$this->faker->sentence(), //paragraph() mas de una linea
+    'f_inicio'=>$this->faker, //investigar como se colocan las fechas
+    'f_fin'=>$this->faker //investigar como se colocan las fechas
+    //->randomElement('Desarrollo web','diseño web'); solo selecciona de esos campos
+]
+
+se ejecuta en el EventoSeeder asi:
+se elimina lo que haya en la funcion run()
+se coloca -> :
+Evento::factory('cantidad de datos que queremos')->create();
+Evento::factory(50)->create();
+Esto podria ejecutarse perfectamente desde 
+/app/database/seeders/DatabaseSeeder.php
+Evento::factory(50)->create(); // se importa la clase y se corre el seeder 
+entonces solo usariamos un seeder;
+//pero no eliminar todo o no usarlos, porque cuando tenemos tablas relacionadas
+nos va a servir mucho 
+
+
+Eloquent generador de consultas
+Se usa de nuevo tinker:
+php artisan tinker //abrimos tinker
+use App\Models\Evento; //entramos a la clase
+$eventos = Evento::all(); //le decimos que nos traiga todos los reguistros y lo guarde en la variable
+$eventos = Evento::where('color','orange')->get(); //si quiero uno en especifico (restriccion)
+$eventos = Evento::where('color','orange')->orderby('id','desc')->get(); // ordena los datos descen o ascenden
+$eventos = Evento::where('color','orange')->orderby('id','desc')->first(); //solo devuelve el primer objeto de la coleccion
+//las consultas me devuelven todos los campos, para tener solo campos especificos 
+$eventos = Evento::select('evento','color')->get();
+//todo esto se puede combinar y jugar con ellos 
+parecen consultas sql 
+$eventos = Evento::select('evento','color')->orderby('id','desc')->get();
+//para reemplazar el nombre de un campo es:
+$eventos = Evento::select('evento as title','color')->orderby('id','desc')->get();
+//Especificar cuantos registros quiero tener take(especifico un numero):
+$eventos = Evento::select('evento as title','color')->take(1)->get();
+//Consulta para buscar un registro en particular: 
+$eventos = Evento::where('evento','Dia')->get();
+si queremos acceder a la condicion: $eventos->name;
+sale error porque es un get y devuelve un array, se le cambia por first
+$eventos = Evento::where('evento','Dia')->first();
+$eventos->name; ahora si se puede llamar a este metodo
+//Para llamar por id que es el mas usado se puede hacer asi:
+$eventos = Evento::where('id',3)->first();
+pero como es muy usado se puede usar:
+$eventos = Evento::find(3);
+da el mismo resultado
+//consultas mas complejas
+$eventos = Evento::where('id','>',3)->first(); // se puede usar > < >= <= <>
+tambien permite usar caracteres especiales
+$eventos = Evento::where('evento','like','%primera%')->first(); //consltas complejas con string, ademas de
+% busca datos sin importar que haya atras o adelante;
+
+Los inner_join union de tablas se hacen directamente en los modelos, como en C#
+ejemplo: Producto tiene categorias
+entonces Producto tendra el forengkey señalando a la clave primaria categoria
+se veria asi:
+
+class Categoria extends Model
+{
+    protected $table = "categorias";
+}
+class Producto extends Model
+{
+    protected $table = "productos";//indica a que tabla quiero que trabajae ya lo escribi arriba
+    public function categoria(){
+        //belongsTo() - > se refiere a pertenece a
+        //return $this->belongsTo(Categoria::class, 'categoria_id'/*nombre del foreingkey*/,'id' /*primary key de Categoria*/);
+        return $this->belongsTo(Categoria::class, 'categoria_id','id');
+        //si la clave primaria de categoria es id, no se coloca nada o depende de nosotros
+        //pero si tiene otro nombre, si o si debe colocarse algo
+    }
+}
+
+En la vista seria algo asi:
+@foreach($lista as $item){
+    <i class="fa fa-html5" aria-hidden="true">
+        $item->id
+        $item->nombre
+        $item->categoria->nombre
+    </i>
+}
+@endforeach
+
+//Ahora que sea a la visceversa que categoria llame a 
+los productos con omr igual que arriva
+1 se debe especificar la relacion contraria, de uno a muchos
+una categoria puede tener mucho productos, o muchos productos pueden tener muchas categorias
+//usamos la relacion de uno a muchos
+public function productos(){
+    return $this->hasMany(Product::class, 'category_id','id');
+}
+
+//o la de uno a uno
+public function order_detail(){
+    return $this->hasOne(Category::class, 'order_id','id');
+}
+
+y en el controller se usaria asi: 
+//$productos = Producto::where('categoria_id',1)->get();
+$productos = Categoria::find(1/*id*/)->productos()->get();
+
+
+
+
+
+
+
+
+
+
+
