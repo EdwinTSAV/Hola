@@ -1,0 +1,80 @@
+<!--
+?php
+//Operadores matematicos
+/*
++ suma
+- resta
+* multiplicacion
+/ division
+% Modulo (devuelve el resto de una division)
+++ incrementa
++= incrementa el valor de la variable en un numero concreto
+-- decrementa
+-= decrementa el valor de la variable en un numero concreto
+*/
+
+?>-->
+<! doctype html>
+<html>
+<head>
+<meta charset="utf8">
+<title>Ensayo 1</title>
+</head>
+<body>
+    <p>&nbsp;</p>
+    <!--Se coloca el action para hacer que reenvie-->
+    <form name="form1" method="post" action="Calculos.php">
+        <p>
+        <label for="num1"></label>
+        <input type="text" name="num1" id="num1">
+        <label for="num2"></label>
+        <input type="text" name="num2" id="num2">
+        <label for="operacion"></label>
+        <select name="operacion" id="operacion">
+            <option>Suma</option>
+            <option>Resta</option>
+            <option>Multiplicación</option>
+            <option>División</option>
+            <option>Módulo</option>
+        </select>
+        </p>
+        <p>
+            <input type="submit" name="button" id="button" value="Enviar" onClick="prueba">
+        </p>
+    </form>
+
+    <p>&nbsp;</p>
+
+    <!-- sggs
+    aca haremos que este archivo ya no sea php sino
+    html, pasando y usando la hoja php (era php antes de, se transforma a html)
+    
+    Hacer esto con formularios hara que sea mas seguro los datos del cliente
+    
+    
+    ?php
+    /*if(isset($_POST["button"])){
+        $num1 = $_POST["num1"];
+        $num2 = $_POST["num2"];
+        $oper = $_POST["operacion"];
+
+        if(!strcmp("Suma",$oper)){
+            //se debe de colocar entre parentesis para que no concatene mal
+            echo ("El resultado es: " . ($num1 + $num2));
+        }
+        if(!strcmp("Resta",$oper)){
+            echo ("El resultado es: " . ($num1 - $num2));
+        }
+        if(!strcmp("Multiplicación",$oper)){
+            echo ("El resultado es: " . ($num1 * $num2));
+        }
+        if(!strcmp("División",$oper)){
+            echo ("El resultado es: " . ($num1 / $num2));
+        }
+        if(!strcmp("Módulo",$oper)){
+            echo ("El resultado es: " . ($num1 % $num2));
+        }
+    }*/
+    ?>
+    !-->
+</body>
